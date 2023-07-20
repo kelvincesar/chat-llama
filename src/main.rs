@@ -49,6 +49,36 @@ async fn favicon(
     ))?)
 }
 
+
+// Renderiza a função apenas no lado do servidor
+cfg_if! {
+    if #[cfg(feature = "ssr")] {
+        use llm:models::Llama;
+        use actix_web::*;
+        use std::env;
+        use dotenv::dotenv;
+        
+        // Função para carregar o modelo
+        fn get_language_model() -> Llama {
+            use std::path::PathBuf;
+            dotenv().ok();
+            
+            let model_path = env::var("MODEL_PATH").expect("MODEL_PATH deve ser especificado com o caminho para o modelo Llama");
+
+            llm::load::<Llama>(
+                &PathBuf::from(&model_path),
+                llm::TokenizerSource::Embedded,
+                Default::default(),
+                llm::load_progress_callback_stdout,
+            )
+            .unwrap_or_else(|err| {
+                panic!("Erro ao carregar o modelo em {model_path:?}: {err}")
+            })
+
+        }
+    }
+}
+
 #[cfg(not(any(feature = "ssr", feature = "csr")))]
 pub fn main() {
     // no client-side main function
