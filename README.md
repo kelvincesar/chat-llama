@@ -18,6 +18,8 @@ cargo install trunk cargo-leptos
 cargo install cargo-generate
 npm install -g sass
 nix-env -iA nixos.dart
+
+npm install -D tailwindcss
 ```
 
 Model downloaded from

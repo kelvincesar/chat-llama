@@ -1,9 +1,11 @@
 use cfg_if::cfg_if;
 
-
 #[cfg(feature = "ssr")]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+
     use actix_files::Files;
     use actix_web::*;
     use leptos::*;
@@ -14,13 +16,12 @@ async fn main() -> std::io::Result<()> {
     let addr = conf.leptos_options.site_addr;
     // Generate the list of routes in your Leptos App
     let routes = generate_route_list(|cx| view! { cx, <App/> });
-    
+
     // Fornece arquivo css
     #[get("/style.css")]
     async fn css() -> impl Responder {
         actix_files::NamedFile::open_async("./style/output.css").await
     }
-
 
     // Carrega o modelo com wrapper em web::Data em atomic reference
     let model = web::Data::new(get_language_model());
@@ -31,22 +32,22 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .app_data(model.clone())
-            .route("/api/{tail:.*}", leptos_actix::handle_server_fns())
-            // serve JS/WASM/CSS from `pkg`
-            .service(Files::new("/pkg", format!("{site_root}/pkg")))
-            // serve other assets from the `assets` directory
-            .service(Files::new("/assets", site_root))
-            // serve the favicon from /favicon.ico
-            .service(favicon)
             // serve css
             .service(css)
+            .route("/api/{tail:.*}", leptos_actix::handle_server_fns())
+            // serve JS/WASM/CSS from `pkg`
+            //.service(Files::new("/pkg", format!("{site_root}/pkg")))
+            // serve other assets from the `assets` directory
+            //.service(Files::new("/assets", site_root))
+            // serve the favicon from /favicon.ico
+            //.service(favicon)
             .leptos_routes(
                 leptos_options.to_owned(),
                 routes.to_owned(),
                 |cx| view! { cx, <App/> },
             )
-            .app_data(web::Data::new(leptos_options.to_owned()))
-        //.wrap(middleware::Compress::default())
+            .service(Files::new("/", site_root))
+            //.app_data(web::Data::new(leptos_options.to_owned()))
     })
     .bind(&addr)?
     .run()
@@ -65,20 +66,19 @@ async fn favicon(
     ))?)
 }
 
-
 // Renderiza a função apenas no lado do servidor
 cfg_if! {
     if #[cfg(feature = "ssr")] {
-        use llm:models::Llama;
+        use llm::models::Llama;
         use actix_web::*;
         use std::env;
         use dotenv::dotenv;
-        
+
         // Função para carregar o modelo
         fn get_language_model() -> Llama {
             use std::path::PathBuf;
             dotenv().ok();
-            
+
             let model_path = env::var("MODEL_PATH").expect("MODEL_PATH deve ser especificado com o caminho para o modelo Llama");
 
             llm::load::<Llama>(

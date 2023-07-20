@@ -18,7 +18,7 @@ pub async fn converse(cx: Scope, prompt: Conversation) -> Result<String, ServerF
     use llm::KnownModel;
     let character_name = "### Assistente";
     let user_name = "### Humano";
-    let persona = "A chat between a human and an assistant";
+    let persona = "Chat entre humano e language model";
 
     let mut history = format!(
         "{character_name}:Olá - Como posso te ajudar?\n\
@@ -37,7 +37,7 @@ pub async fn converse(cx: Scope, prompt: Conversation) -> Result<String, ServerF
     }
 
     let mut inference_result = String::new();
-    let mut rng = rand::thread_rnd();
+    let mut rng = rand::thread_rng();
     let mut buf = String::new();
 
     let mut session = model.start_session(Default::default());
