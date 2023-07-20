@@ -1,7 +1,12 @@
 use leptos::*;
 use leptos_meta::*;
-use leptos_router::*;
 
+mod components;
+use components::chat_area::ChatArea;
+use components::input_area::InputArea;
+
+
+use crate::api::converse;
 use crate::model::conversation::{Conversation, Message};
 
 #[component]
@@ -30,6 +35,33 @@ pub fn App(cx: Scope) -> impl IntoView {
         // é resolvida pela declaração `server(Converse "/api")` 
         converse(cx, conversation.get())
     });
+
+    // Agurda um input do usuário
+    create_effect(cx, move|_| {
+        // input_signal: insere `...` na conversa após inserção de mensagem;
+        if let Some(_) = send.input().get() {
+            let model_message = Message {    
+                text: String::from("..."),
+                user: false,
+            };
+
+            set_conversation.update(move |c| {
+                c.messages.push(model_message);
+            })
+        }
+
+    });
+    // Aguarda mensagem do backend com a inferencia
+    create_effect(cx, move |_| {
+        if let Some(Ok(response)) = send.value().get() {
+            set_conversation.update(move |c| {
+                // captura a última mensagem do chat e modifica os `...` pela
+                // resposta da inferencia
+                c.messages.last_mut().unwrap().text = response;
+            })
+        }
+    });
+    
     view! { cx,
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet

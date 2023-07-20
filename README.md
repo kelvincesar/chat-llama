@@ -20,6 +20,11 @@ npm install -g sass
 nix-env -iA nixos.dart
 ```
 
+Model downloaded from
+https://huggingface.co/TheBloke/Wizard-Vicuna-7B-Uncensored-GGML/tree/main
+
+Necessary to use .env file with parameter:
+`MODEL_PATH`: path to the model llama;
 
 ## Creating your template repo
 
